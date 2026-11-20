@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#FFFFFF">
+    <meta name="description" content="Folio — Browser e-book reader.">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob:; script-src 'self'; style-src 'self' blob: 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' blob: data: https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob: data: *; frame-src blob: data:; object-src blob: data:; form-action 'none';">
+    <title>Folio</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..600;1,400..600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Literata:ital,opsz,wght@0,7..72,400..600;1,7..72,400..600&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <input type="file" id="file-input" multiple accept=".epub,.mobi,.azw,.azw3,.kf8,.fb2,.fbz,.cbz,.pdf" hidden>
+
+    <!-- ================= LIBRARY VIEW ================= -->
+    <div id="library-view" class="library-view">
+        <header class="lib-header">
+            <div class="lib-header-inner">
+                <div class="brand">
+                    <span class="brand-mark" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter">
+                            <path d="M2 5.5C4.5 4.4 8.2 4.4 12 6.4C15.8 4.4 19.5 4.4 22 5.5V19C19.5 17.9 15.8 17.9 12 19.9C8.2 17.9 4.5 17.9 2 19V5.5Z"/>
+                            <line x1="12" y1="6.4" x2="12" y2="19.9"/>
+                        </svg>
+                    </span>
+                    <span class="brand-name">Folio</span>
+                </div>
+
+                <div class="lib-header-actions">
+                    <button type="button" id="lib-theme-btn" class="icon-btn" title="Switch reading theme" aria-label="Switch reading theme">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="4"/>
+                            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                        </svg>
+                    </button>
+                    <button type="button" id="lib-shortcuts-btn" class="icon-btn" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                    </button>
+                    <button type="button" id="lib-open-btn" class="btn btn-primary">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                        Add Books
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="lib-main">
+            <!-- Empty state -->
+            <section id="library-empty" class="library-empty">
+                <div class="drop-card">
+                    <div class="drop-card-icon" aria-hidden="true">
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" stroke-linejoin="miter">
+                            <path d="M4 19.5V4a2 2 0 0 1 2-2h14v20H6a2 2 0 0 1-2-2.5Z"/>
+                            <path d="M12 7v6m0 0-2.5-2.5M12 13l2.5-2.5"/>
+                        </svg>
+                    </div>
+                    <p class="drop-card-title">Drop books here</p>
+                    <p class="drop-card-formats">EPUB · MOBI · AZW3 · KF8 · FB2 · CBZ · PDF</p>
+                    <div class="drop-card-actions">
+                        <button type="button" id="empty-browse-btn" class="btn btn-primary">
+                            Open Files
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Populated shelf -->
+            <section id="library-shelf" class="library-shelf" hidden>
+                <div id="continue-reading" class="continue-section" hidden></div>
+
+                <div class="shelf-toolbar">
+                    <div class="shelf-heading">
+                        <h2>Library</h2>
+                        <span id="library-count" class="shelf-count"></span>
+                    </div>
+                    <div class="shelf-controls">
+                        <div class="search-field">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                            </svg>
+                            <input type="search" id="library-search" placeholder="Filter by title or author..." aria-label="Filter library">
+                        </div>
+                        <select id="library-sort" class="select-input" aria-label="Sort books">
+                            <option value="lastOpened">Recently Read</option>
+                            <option value="added">Recently Added</option>
+                            <option value="title">Title (A-Z)</option>
+                            <option value="author">Author (A-Z)</option>
+                            <option value="progress">Progress</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="books-grid" class="books-grid"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ================= READER VIEW ================= -->
+    <div id="reader-view" class="reader-view" hidden>
+        <!-- Top Bar -->
+        <header id="reader-header" class="reader-header">
+            <div class="reader-header-left">
+                <button type="button" id="back-library-btn" class="icon-btn" title="Back to Library" aria-label="Back to Library">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="square" stroke-linejoin="miter">
+                        <path d="m15 18-6-6 6-6"/>
+                    </svg>
+                </button>
+                <button type="button" id="drawer-toggle-btn" class="icon-btn" title="Toggle sidebar (T)" aria-label="Toggle sidebar" aria-expanded="false">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter">
+                        <rect width="18" height="18" x="3" y="3"/><path d="M9 3v18"/>
+                    </svg>
+                </button>
+                <div class="history-nav">
+                    <button type="button" id="history-back-btn" class="icon-btn icon-btn-sm" title="Previous location" aria-label="Previous location" disabled>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+                    </button>
+                    <button type="button" id="history-fwd-btn" class="icon-btn icon-btn-sm" title="Next location" aria-label="Next location" disabled>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="reader-header-center">
+                <div id="reader-book-title" class="reader-title"></div>
+                <div id="reader-chapter-title" class="reader-chapter"></div>
+            </div>
+
+            <div class="reader-header-right">
+                <button type="button" id="bookmark-btn" class="icon-btn" title="Bookmark this page (B)" aria-label="Bookmark this page" aria-pressed="false">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="square" stroke-linejoin="miter">
+                        <path d="m19 21-7-4-7 4V4h14v17z"/>
+                    </svg>
+                </button>
+                <button type="button" id="search-open-btn" class="icon-btn" title="Search in book (/)" aria-label="Search in book">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                    </svg>
+                </button>
+                <button type="button" id="appearance-btn" class="icon-btn" title="Typography & Theme (A)" aria-label="Typography and Theme">
+                    <span class="aa-glyph">Aa</span>
+                </button>
+                <button type="button" id="book-info-btn" class="icon-btn" title="Book information" aria-label="Book information">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                    </svg>
+                </button>
+                <button type="button" id="fullscreen-btn" class="icon-btn hide-sm" title="Fullscreen (F)" aria-label="Toggle Fullscreen">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="square" stroke-linejoin="miter">
+                        <path d="M8 3H3v5m18 0V3h-5m0 18h5v-5M3 16v5h5"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Split Body: Docked Sidebar + Reading Stage -->
+        <div class="reader-body">
+            <div id="drawer-backdrop" class="drawer-backdrop"></div>
+
+            <aside id="drawer" class="drawer" aria-label="Book navigation">
+                <div class="drawer-head">
+                    <img id="drawer-book-cover" class="drawer-cover" alt="" hidden>
+                    <div class="drawer-book-meta">
+                        <div id="drawer-book-title" class="drawer-book-title"></div>
+                        <div id="drawer-book-author" class="drawer-book-author"></div>
+                    </div>
+                    <button type="button" id="drawer-close-btn" class="icon-btn icon-btn-sm" aria-label="Close sidebar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="drawer-tabs" role="tablist">
+                    <button type="button" class="drawer-tab active" data-tab="toc" role="tab" aria-selected="true">Contents</button>
+                    <button type="button" class="drawer-tab" data-tab="notes" role="tab" aria-selected="false">
+                        Notes <span id="notes-count-badge" class="tab-badge" hidden></span>
+                    </button>
+                    <button type="button" class="drawer-tab" data-tab="search" role="tab" aria-selected="false">Search</button>
+                </div>
+
+                <div class="drawer-body">
+                    <!-- TOC Panel -->
+                    <div class="drawer-panel" data-panel="toc">
+                        <div id="toc-list" class="toc-list"></div>
+                    </div>
+
+                    <!-- Notes Panel -->
+                    <div class="drawer-panel" data-panel="notes" hidden>
+                        <div class="notes-panel-actions">
+                            <button type="button" id="export-notes-btn" class="btn btn-secondary btn-sm btn-block" hidden>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Export Notes as Markdown
+                            </button>
+                        </div>
+                        <div id="notes-list" class="notes-list"></div>
+                    </div>
+
+                    <!-- Search Panel -->
+                    <div class="drawer-panel" data-panel="search" hidden>
+                        <form id="book-search-form" class="book-search-form">
+                            <div class="search-field search-field-full">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                <input type="text" id="book-search-input" placeholder="Search full text..." autocomplete="off" aria-label="Search full text">
+                                <button type="button" id="book-search-clear" class="search-clear-btn" title="Clear search" hidden>&times;</button>
+                            </div>
+                        </form>
+                        <div class="search-progress-track">
+                            <div id="search-progress-bar" class="search-progress-bar" hidden></div>
+                        </div>
+                        <div id="search-status" class="search-status"></div>
+                        <div id="search-results" class="search-results"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Reading Stage -->
+            <main id="reader-stage" class="reader-stage">
+                <div id="reader-loading" class="reader-loading" hidden>
+                    <div class="spinner"></div>
+                    <span>Opening book...</span>
+                </div>
+
+                <!-- Continuous multi-chapter vertical scroll container -->
+                <div id="continuous-stage" class="continuous-stage" hidden></div>
+
+                <!-- Paginated edge page-turn buttons -->
+                <button type="button" id="prev-page-btn" class="edge-nav edge-nav-left" aria-label="Previous page" title="Previous page">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button type="button" id="next-page-btn" class="edge-nav edge-nav-right" aria-label="Next page" title="Next page">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+
+                <!-- Hover-only Bottom Chapter Navigator -->
+                <div id="bottom-dock-zone" class="bottom-dock-zone">
+                    <div class="bottom-hairline" aria-hidden="true">
+                        <div id="bottom-hairline-fill" class="bottom-hairline-fill"></div>
+                    </div>
+
+                    <div id="bottom-dock" class="bottom-dock" role="region" aria-label="Reading progress">
+                        <div class="dock-top-row">
+                            <span id="dock-chapter" class="dock-chapter"></span>
+                            <span id="dock-progress" class="dock-progress"></span>
+                        </div>
+                        <div class="dock-controls">
+                            <button type="button" id="prev-chapter-btn" class="dock-step-btn" title="Previous chapter" aria-label="Previous chapter">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="m15 18-6-6 6-6"/></svg>
+                            </button>
+                            <div id="chapter-map" class="chapter-map" role="slider" tabindex="0" aria-label="Jump to reading position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                <div id="chapter-map-tooltip" class="chapter-map-tooltip" hidden></div>
+                                <div id="chapter-segments" class="chapter-segments"></div>
+                            </div>
+                            <button type="button" id="next-chapter-btn" class="dock-step-btn" title="Next chapter" aria-label="Next chapter">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="m9 18 6-6-6-6"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Typography & Appearance Popover -->
+        <div id="appearance-popover" class="popover appearance-popover" hidden role="dialog" aria-label="Reading appearance">
+            <div class="pop-section">
+                <div class="pop-label">Theme</div>
+                <div id="theme-swatches" class="theme-swatches"></div>
+            </div>
+
+            <div class="pop-section">
+                <div class="pop-label">Layout</div>
+                <div class="segmented">
+                    <button type="button" class="seg-btn" data-layout-mode="spread">Spread</button>
+                    <button type="button" class="seg-btn" data-layout-mode="single">Single</button>
+                    <button type="button" class="seg-btn" data-layout-mode="scrolled">Scroll</button>
+                </div>
+            </div>
+
+            <div class="pop-section">
+                <div class="pop-label">Typeface</div>
+                <div id="font-options" class="font-options"></div>
+            </div>
+
+            <div class="pop-section">
+                <div class="pop-row-head">
+                    <span class="pop-label">Font Size</span>
+                    <span id="font-size-value" class="pop-value">19px</span>
+                </div>
+                <div class="size-stepper">
+                    <button type="button" id="font-size-dec" class="step-btn" aria-label="Decrease font size">A-</button>
+                    <input type="range" id="font-size-slider" min="13" max="28" step="1" value="19" aria-label="Font size">
+                    <button type="button" id="font-size-inc" class="step-btn" aria-label="Increase font size">A+</button>
+                </div>
+            </div>
+
+            <div class="pop-section">
+                <div class="pop-row-head">
+                    <span class="pop-label">Line Spacing</span>
+                    <span id="line-height-value" class="pop-value">1.65</span>
+                </div>
+                <input type="range" id="line-height-slider" class="range-full" min="1.2" max="2.1" step="0.05" value="1.65" aria-label="Line spacing">
+            </div>
+
+            <div class="pop-section">
+                <div class="pop-label">Column Width</div>
+                <div class="segmented">
+                    <button type="button" class="seg-btn" data-page-width="narrow">Narrow</button>
+                    <button type="button" class="seg-btn" data-page-width="medium">Medium</button>
+                    <button type="button" class="seg-btn" data-page-width="wide">Wide</button>
+                </div>
+            </div>
+
+            <div class="pop-section pop-toggles">
+                <label class="toggle-row">
+                    <span>Justify text</span>
+                    <input type="checkbox" id="toggle-justify" checked>
+                </label>
+                <label class="toggle-row">
+                    <span>Hyphenation</span>
+                    <input type="checkbox" id="toggle-hyphenate" checked>
+                </label>
+                <label class="toggle-row">
+                    <span>Override publisher styles</span>
+                    <input type="checkbox" id="toggle-override" checked>
+                </label>
+            </div>
+        </div>
+
+        <!-- Text Selection Floating Toolbar -->
+        <div id="selection-popover" class="selection-popover" hidden>
+            <div class="selection-colors"></div>
+            <span class="sel-divider"></span>
+            <button type="button" id="sel-note-btn" class="sel-action">Note</button>
+            <button type="button" id="sel-copy-btn" class="sel-action">Copy</button>
+            <button type="button" id="sel-search-btn" class="sel-action">Search</button>
+        </div>
+
+        <!-- Existing Highlight Inspector Popover -->
+        <div id="annotation-popover" class="popover annotation-popover" hidden>
+            <div class="ann-header">
+                <div class="ann-colors"></div>
+                <button type="button" id="ann-close-btn" class="icon-btn icon-btn-xs" aria-label="Close">&times;</button>
+            </div>
+            <blockquote id="ann-quote" class="ann-quote"></blockquote>
+            <textarea id="ann-note-input" class="ann-textarea" rows="3" placeholder="Add a note..."></textarea>
+            <div class="ann-actions">
+                <button type="button" id="ann-delete-btn" class="btn btn-danger-ghost btn-sm">Delete</button>
+                <div class="ann-actions-right">
+                    <button type="button" id="ann-copy-btn" class="btn btn-secondary btn-sm">Copy</button>
+                    <button type="button" id="ann-save-btn" class="btn btn-primary btn-sm">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footnote Floating Card -->
+        <div id="footnote-card" class="footnote-card" hidden>
+            <div class="footnote-header">
+                <span class="footnote-title">Footnote</span>
+                <div class="footnote-actions">
+                    <button type="button" id="footnote-goto-btn" class="text-link">Jump to note</button>
+                    <button type="button" id="footnote-close-btn" class="icon-btn icon-btn-xs" aria-label="Close footnote">&times;</button>
+                </div>
+            </div>
+            <div id="footnote-body" class="footnote-body"></div>
+        </div>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+    <div id="info-modal" class="modal-backdrop" hidden>
+        <div class="modal-dialog" role="dialog" aria-labelledby="info-modal-title">
+            <div class="modal-head">
+                <h3 id="info-modal-title">Book Information</h3>
+                <button type="button" class="icon-btn icon-btn-sm" data-close-modal aria-label="Close">&times;</button>
+            </div>
+            <div id="info-modal-body" class="modal-body"></div>
+        </div>
+    </div>
+
+    <div id="shortcuts-modal" class="modal-backdrop" hidden>
+        <div class="modal-dialog" role="dialog" aria-labelledby="shortcuts-modal-title">
+            <div class="modal-head">
+                <h3 id="shortcuts-modal-title">Keyboard Shortcuts</h3>
+                <button type="button" class="icon-btn icon-btn-sm" data-close-modal aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-list">
+                    <div class="shortcut-row"><span>Next page (paginated)</span><span><kbd>&rarr;</kbd> <kbd>Space</kbd> <kbd>L</kbd></span></div>
+                    <div class="shortcut-row"><span>Previous page (paginated)</span><span><kbd>&larr;</kbd> <kbd>Shift+Space</kbd> <kbd>H</kbd></span></div>
+                    <div class="shortcut-row"><span>Toggle docked sidebar</span><span><kbd>T</kbd></span></div>
+                    <div class="shortcut-row"><span>Search inside book</span><span><kbd>/</kbd></span></div>
+                    <div class="shortcut-row"><span>Typography &amp; Theme</span><span><kbd>A</kbd></span></div>
+                    <div class="shortcut-row"><span>Bookmark current page</span><span><kbd>B</kbd></span></div>
+                    <div class="shortcut-row"><span>Toggle Fullscreen</span><span><kbd>F</kbd></span></div>
+                    <div class="shortcut-row"><span>Toggle Focus Mode</span><span>Click center of page</span></div>
+                    <div class="shortcut-row"><span>Dismiss panel / Focus mode</span><span><kbd>Esc</kbd></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Drop Overlay -->
+    <div id="global-drop-overlay" class="global-drop-overlay" hidden>
+        <div class="global-drop-box">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter">
+                <path d="M4 19.5V4a2 2 0 0 1 2-2h14v20H6a2 2 0 0 1-2-2.5Z"/>
+                <path d="M12 7v6m0 0-2.5-2.5M12 13l2.5-2.5"/>
+            </svg>
+            <h2>Drop to open</h2>
+        </div>
+    </div>
+
+    <!-- Toasts -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <script type="module" src="./src/app.js"></script>
+</body>
+</html>
